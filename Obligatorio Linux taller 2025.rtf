@@ -1,0 +1,387 @@
+{\rtf1\ansi\ansicpg1252\deff0\nouicompat\deflang2058{\fonttbl{\f0\fnil\fcharset0 Calibri;}{\f1\fnil\fcharset2 Symbol;}}
+{\*\generator Riched20 10.0.19041}\viewkind4\uc1 
+\pard\sa200\sl276\slmult1\qc\b\f0\fs52\lang10 Trabajo obligatorio\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+
+\pard\sa200\sl276\slmult1\fs40 Alumno: \b0 Matt\'edas S\'e1nchez\b\par
+N\'famero de estudiante: \b0 230382\b\fs52\par
+\par
+\par
+
+\pard\sa200\sl276\slmult1\qc\fs40 Introducci\'f3n\fs52\par
+
+\pard\sa200\sl276\slmult1\b0\fs32 Este trabajo tiene como objetivo guiar paso a paso la instalaci\'f3n y configuraci\'f3n de dos servidores Linux (Ubuntu 24.02 y CentOS Stream 9) utilizando la herramienta de automatizaci\'f3n Ansible. Est\'e1 dise\'f1ado para ser entendido por personas sin conocimientos t\'e9cnicos previos.\par
+Se instalar\'e1n los servidores en m\'e1quinas virtuales con caracter\'edsticas espec\'edficas, se configurar\'e1 el acceso remoto mediante clave p\'fablica SSH y se automatizar\'e1n tareas utilizando Ansible, incluyendo la instalaci\'f3n de servicios como NFS, firewall, actualizaciones y seguridad b\'e1sica.\par
+Al terminar el proceso, se tendr\'e1 una infraestructura m\'ednima pero funcional.\par
+\par
+
+\pard\sa200\sl276\slmult1\qc\b Tarea 1: Instalaci\'f3n de servidores\par
+
+\pard\sa200\sl276\slmult1\b0 El objetivo es tener dos servidores instalados, uno con CentOS Stream 9 Y otro con Ubuntu Server 24.04, cumpliendo con requisitos espec\'edficos de hardware, red y disco.\par
+\b Requisitos por servidor\b0\par
+
+\pard{\pntext\f1\'B7\tab}{\*\pn\pnlvlblt\pnf1\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1  1 CPU\par
+{\pntext\f1\'B7\tab}- 2 GB RAM\par
+{\pntext\f1\'B7\tab} Disco con particiones:\par
+
+\pard\sa200\sl276\slmult1             /boot: 1-2 GB\par
+            /: 10GB\par
+            /var: 5GB \par
+            SWAP: 4GB\par
+
+\pard{\pntext\f1\'B7\tab}{\*\pn\pnlvlblt\pnf1\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1 2 interfaces de red: \par
+
+\pard\sa200\sl276\slmult1            1 en NAT\par
+           1 en red interna (comunicaci\'f3n con el basti\'f3n)\par
+
+\pard{\pntext\f1\'B7\tab}{\*\pn\pnlvlblt\pnf1\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1 Acceso SSH con clave p\'fablica.\par
+
+\pard\sa200\sl276\slmult1\qc\b Crear la primera m\'e1quina virtual en VirtualBox\b0\par
+
+\pard\sa200\sl276\slmult1 Nombre: centos-server\par
+Tipo: Linux/ (Red Hat 64-bit)\par
+Memoria: 2024 MB\par
+Disco: 20 GB (din\'e1mico)\par
+Posteriormente, conectar la ISO de CentOS, la cual fue copiada previamente en un pendrive desde el equipo de la clase.\par
+El usuario y contrase\'f1a son los mismos que usamos en clase: sysadmin y aslxlab respectivamente.\par
+
+\pard\sa200\sl276\slmult1\qc\b Particionado manual\par
+
+\pard\sa200\sl276\slmult1\b0 Para poder configurar las particiones de disco, es necesario desactivar la opci\'f3n de cambios autom\'e1ticos del instalador.\par
+Debemos usar particiones LVM.\par
+Seleccionar "Custom Partitioning" y crear los siguientes puntos de montaje:\par
+\b /boot \b0 de tipo xfs, con 1.5GB.\b\par
+/ \b0 de tipo xfs, con 10GB.\b\par
+/var \b0 tambi\'e9n de tipo xfs, con 5GB.\b\par
+SWAP \b0 de tipo swap con 4GB.\par
+\par
+
+\pard\sa200\sl276\slmult1\qc\b Configurar la red\b0\par
+
+\pard\sa200\sl276\slmult1 Creamos dos interfaces de red una NAT y otra red interna. \par
+Luego en el instalador debemos activar ambas interfaces y asignar IP manual. Tambi\'e9n se puede hacer mediante DHCP.\par
+La red quedar\'eda con la siguiente configuraci\'f3n:\par
+\b Interface 1: \b0 NAT. \par
+Con IP din\'e1mica.\par
+\b Interface 2: \b0 Red interna (nombre: intranet).\par
+Le asignamos IP fija, 192.168.1.10.\par
+La dejamos sin puerta de enlace.\par
+\par
+\b Crear el usuario administrador\par
+\b0 Creamos el usuario de nombre sysadmin con la misma contrase\'f1a del curso (aslxlab), lo marcamos como sudoer para que quede con los permisos sudo.\par
+Posteriormente le habilitamos SSH.\par
+Habiendo terminado con la instalaci\'f3n, finalizamos y reiniciamos la m\'e1quina virtual.\par
+\b\par
+
+\pard\sa200\sl276\slmult1\qc Crear la segunda m\'e1quina virtual en VirtualBox\par
+
+\pard\sa200\sl276\slmult1\b0 Creamos el ubuntu server con nombre ubuntu-server de tipo Linux / Ubuntu (64-bit). Le asignamos 2048 MB de memoria y un disco de expansi\'f3n din\'e1mica de 20 GB de memoria.\par
+Conectamos la ISO de Ubuntu Server 24.04 que est\'e1 copiada en el pendrive.\par
+Elegimos la opci\'f3n de instalaci\'f3n m\'ednima.\par
+\par
+
+\pard\sa200\sl276\slmult1\qc\b Particionado manual \b0\par
+
+\pard\sa200\sl276\slmult1 En el instalador (con modo experto) creamos los mismos puntos de montaje que en la primera m\'e1quina, usando particiones LVM:\par
+\b /boot \b0 con sistema de archivos ext4 y 1.5 GB de memoria.\b\par
+/ \b0 con sistema de archivos ext4 y 10 GB de memoria.\b\par
+/var \b0 con sistema de archivos ext4 y 5 GB de memoria.\b\par
+SWAP\b0  con sistema de archivos swap y 4 GB de memoria.\par
+\par
+
+\pard\sa200\sl276\slmult1\qc\b Configurar la red\b0\par
+
+\pard\sa200\sl276\slmult1 Creamos las mismas dos interfaces que en la primera m\'e1quina:\par
+Interface 1 con red NAT y con IP autom\'e1tica asignada por DHCP.\par
+Interface 2 con red interna y con IP fija 192.168.1.20\par
+Tambi\'e9n la dejamos sin puerta de enlace, como a la primera m\'e1quina. \par
+\b\par
+
+\pard\sa200\sl276\slmult1\qc Editar el archivo de configuraci\'f3n \par
+
+\pard\sa200\sl276\slmult1\b0 Para abrirlo usamos el editor de texto nano, con el comando:\par
+\b\i sudo nano /etc/netplan/01-netcfg.yaml\b0\par
+\i0 Lo configuramos de la siguiente manera:\b\par
+\b0 # /etc/netplan/00-installer-config.yaml\par
+network:\par
+  version: 2\par
+  ethernets:\par
+    enp0s3:\par
+      dhcp4: true\par
+    enp0s8:\par
+      dhcp4: no\par
+      addresses: [192.168.1.20/24]\par
+Luego para salir usamos ctrl + 0 para guardar y salimos del editor con ctrl + x.\par
+Cuando estemos fuera del archivo, aplicamos los cambios con el comando:\par
+\b sudo netplan apply\b0\par
+\par
+
+\pard\sa200\sl276\slmult1\qc\b Tarea 2: configuraci\'f3n del archivo de inventario de Ansible\par
+
+\pard\sa200\sl276\slmult1\b0 Para que Ansible pueda comunicarse con los servidores instalados en la tarea anterior, debemos crear un archivo de inventario. Este archivo, llamado com\'fanmente \b inventory.ini\b0  es el que indica a Ansible qu\'e9 servidores existen, c\'f3mo se agrupan y de qu\'e9 forma debe conectarse a ellos.\par
+En este caso, defiminos cuatro grupos principales:\par
+\b 1) linux - \b0 Este es el grupo general que engloba a todos los servidores Linux que se van a administrar.\b\par
+2) ubuntu - \b0 Un subgrupo dentro de Linux, que contiene el servidor con Ubuntu 24.04.\b\par
+3) centos - \b0 Otro subgrupo de Linux, que incluye el servidor con CentOS Stream 9.\b\par
+4) webserver - \b0 Grupo espec\'edfico donde se incluye \'fanicamente el servidor CentOS, ya que m\'e1s adelante ser\'e1 elque act\'fae como servidor de aplicaciones o servicios web.\par
+La estructura final del archivo inventory.ini queda de la siguiente forma: \par
+\b [ubuntu]\b0\par
+ubuntu-server ansible_host=192.168.1.20 ansible_user=admin\par
+\b [centos]\b0\par
+centos-server ansible_host=192.168.1.10 ansible_user=admin\par
+\b [linux:children]\b0\par
+ubuntu\par
+centos\par
+\b [webserver]\b0\par
+centos-server\par
+\par
+En este archivo, el par\'e1metro ansible_host especifica la direcci\'f3n IP interna de cada servidor, mientras que ansible_user indica el usuario con el que Ansible se conectar\'e1 mediante SSH. En este caso, el usuario sysadmin es el mismo que configuramos durante la instalaci\'f3n de ambos sistemas.\par
+\par
+
+\pard\sa200\sl276\slmult1\qc\b Probar conexi\'f3n \par
+
+\pard\sa200\sl276\slmult1\b0 Para configurar que el inventario est\'e9 bien guardado, ejecutamos dos comandos b\'e1sicos de prueba.\par
+El primero es:\par
+\b ansible-inventory -i inventory.ini  --list\par
+\b0 Este comando muestra en pantalla la interpretaci\'f3n que hace Ansible del archivo de inventario. Sirve para confirmar que los grupos y hosts se reconocen correctamente.\par
+El segundo es:\par
+\b ansible  all  -i inventory.ini -m ping\par
+\b0 En este caso, el m\'f3dulo ping de Ansible no env\'eda un \b ping\b0  de red tradicional, sino que prueba la conexi\'f3n SSH a cada servidor y ejecuta una peque\'f1a acci\'f3n para confirmar que puede comunicarse y ejecutar tareas. \par
+La salida esperada muestra \b pong \b0 para cada host, lo que indica que la conexi\'f3n es exitosa.\par
+Al finalizar estas pruebas, se puede verificar que las configuraci\'f3n del inventario es correcta, y que Ansible est\'e1 listo para administrar ambos servidores en las siguientes tareas.\par
+\par
+
+\pard\sa200\sl276\slmult1\qc\b Tarea 3: ejecuci\'f3n de comandos ad-hoc en Ansible\b0\par
+
+\pard\sa200\sl276\slmult1 Una vez configurado y probado el inventario, el siguiente paso consiste en ejecutar algunos comandos \b ad-hoc\b0  con Ansible. Estos comandos son acciones puntuales que se pueden realizar directamente desde la l\'ednea de comandos, sin necesidad de escribir un playbook.\par
+La idea es familiarizarse con la forma en que Ansible se comunica con los servidores y verificar que puede ejecutar instrucciones de administraci\'f3n remota de manera correcta.\par
+
+\pard\sa200\sl276\slmult1\qc\b Listar todos los usuarios en el servidor Ubuntu\par
+
+\pard\sa200\sl276\slmult1\b0 Para obtener la lista de usuarios registrados en el servidor Ubuntu, utilizamos el comando \b command \b0 de Ansible con el siguiente comando:\par
+\b ansible ubuntu -i inventory.ini -m command -a "cat /etc/passwd"\par
+\b0 Este archivo contiene, entre otros datos, el nombre de cada usuario, su identificador (UID), grupo principal, directorio personal y shell asignado. La salida muestra tanto los usuarios del sistema como el usuario sysadmin que creamos durante la instalaci\'f3n.\par
+\par
+
+\pard\sa200\sl276\slmult1\qc\b Mostrar el uso de memoria en todos los servidores\par
+
+\pard\sa200\sl276\slmult1\b0 El segundo comando consiste en consultar la memoria disponible y utilizada en los dos servidores al mismo tiempo, para eso usamos: \par
+\b ansible linux -i inventory.ini -m command -a "free -h"\par
+\b0 La opci\'f3n -h representa la informaci\'f3n en un formato legible (human readable), mostrando las cantidades en MB o GB en lugar de solo en kilobytes. Esto permiti\'f3 confirmar que cada m\'e1quina ten\'eda los 2 GB de RAM configurados inicialmente, y tambi\'e9n la partici\'f3n SWAP activa.\par
+\par
+\b Verificar que chrony est\'e9 instalado y funcionando en el servidor CentOS:\par
+\b0 El \'faltimo comando fue un poco m\'e1s espec\'edfico. La consigna ped\'eda asegurarse de que el servicio chronyd estuviera instalado y en ejecuci\'f3n en el servidor CentOS. Para eso, utilizamos dos pasos: primero la instalaci\'f3n y luego la verificaci\'f3n.\par
+\par
+\b Instalaci\'f3n:\par
+ansible centos -i inventory.ini -m yum -a "name=chrony state=present" --become\par
+\par
+Verificaci\'f3n del estado del servicio:\par
+ansible centos -i inventory.ini -m service -a "name=chronyd state=started enabled=yes" --become\par
+\par
+Finalmente, para confirmar que efectvamente qued\'f3 activo, ejecutamos:\par
+ansible centos -i inventory.ini -m command -a "systemctl status chronyd"\par
+\b0 Al ejecutar este comando, la salida mostr\'f3 el servicio en estado active (running), lo que cumpl\'eda con el requisito planteado.\par
+Con estas pruebas comprobamos que Ansible pod\'eda ejecutar comandos en servidores individuales o grupos de servidores, y que la configuraci\'f3n de conexi\'f3n era estable. Esto sent\'f3 la base para avanzar a las tareas con playbooks, que son m\'e1s potentes y permiten automatizar procesos completos de configuraci\'f3n.\par
+\par
+
+\pard\sa200\sl276\slmult1\qc\b Tarea 4: creaci\'f3n y ejecuci\'f3n de playbooks en Ansible\par
+
+\pard\sa200\sl276\slmult1\b0 En esta tarease desarrollaron dos playbooks distintos: uno para el servidor CentOS, encargado de configurar un servicio NFS, y otro para el servidor Ubuntu, orientado a tareas de seguridad y endurecimiento del sistema (hardening).\par
+La diferencia principal entre usar comandos ad-hoc (como en la tarea anterior) y un playbook es que el playbook permite definir una serie de pasos organizados, reutilizables y f\'e1ciles de ejecutar nuevamente.\par
+\par
+
+\pard\sa200\sl276\slmult1\qc\b Playbook para centos \par
+
+\pard\sa200\sl276\slmult1\b0 El primer playbook tiene como objetivo instalar y configurar un servidor NFS en CentOS Stream 9. La idea es que cualquier cliente autorizado en la red pueda acceder a un directorio compartido.\par
+El contenido del playbook qued\'f3 as\'ed:\par
+\b ---\par
+- name: Configuraci\'f3n de servidor NFS en CentOS\par
+  hosts: centos\par
+  become: yes\par
+  tasks:\par
+    - name: Instalar NFS\par
+      yum:\par
+        name: nfs-utils\par
+        state: present\par
+\par
+    - name: Iniciar y habilitar NFS\par
+      service:\par
+        name: nfs-server\par
+        state: started\par
+        enabled: yes\par
+\par
+    - name: Permitir puerto 2049 en el firewall\par
+      firewalld:\par
+        port: 2049/tcp\par
+        permanent: yes\par
+        state: enabled\par
+        immediate: yes\par
+\par
+    - name: Crear directorio compartido\par
+      file:\par
+        path: /var/nfs_shared\par
+        state: directory\par
+        owner: nobody\par
+        group: nobody\par
+        mode: '0777'\par
+\par
+    - name: Agregar entrada en /etc/exports\par
+      lineinfile:\par
+        path: /etc/exports\par
+        line: "/var/nfs_shared *(rw,sync,no_subtree_check)"\par
+        state: present\par
+      notify: Recargar exports\par
+\par
+  handlers:\par
+    - name: Recargar exports\par
+      command: exportfs -r\par
+\b0\par
+
+\pard\sa200\sl276\slmult1\qc\b Ejecuci\'f3n y resultado\par
+
+\pard\sa200\sl276\slmult1\b0 Para ejecutar el playbook creado anteriormente, utilic\'e9:\par
+\b ansible-playbook -i inventory.ini nfs_setup.yml\b0\par
+Al finalizar, el directorio /var/nfs_shared qued\'f3 creado con permisos abiertos, el servicio NFS en ejecuci\'f3n y el firewall permitiendo las conexiones en el puerto 2049. Adem\'e1s, el archivo /etc/exports qued\'f3 configurado para compartir la carpeta en toda la red interna.\par
+
+\pard\sa200\sl276\slmult1\qc\b Playbook para Ubuntu \par
+
+\pard\sa200\sl276\slmult1\b0 El segundo plybook estuvo orientado a reforzar la seguridad del servidor Ubuntu. Incluy\'f3 actualizaciones del sistema, configuraci\'f3n de firewall, restricciones de acceso SSH y la instalaci\'f3n de fail2ban.\par
+\par
+El archivo qued\'f3 as\'ed:\par
+\b ---\par
+- name: Hardening en servidor Ubuntu\par
+  hosts: ubuntu\par
+  become: yes\par
+  tasks:\par
+    - name: Actualizar todos los paquetes\par
+      apt:\par
+        upgrade: dist\par
+        update_cache: yes\par
+\par
+    - name: Configurar firewall UFW\par
+      ufw:\par
+        state: enabled\par
+        policy: deny\par
+        rule: allow\par
+        port: ssh\par
+\par
+    - name: Configurar SSH para solo clave p\'fablica y deshabilitar root\par
+      lineinfile:\par
+        path: /etc/ssh/sshd_config\par
+        regexp: '^#?PermitRootLogin'\par
+        line: 'PermitRootLogin no'\par
+      notify: Reiniciar SSH\par
+\par
+    - name: Instalar fail2ban\par
+      apt:\par
+        name: fail2ban\par
+        state: present\par
+\par
+    - name: Asegurar que fail2ban est\'e9 activo\par
+      service:\par
+        name: fail2ban\par
+        state: started\par
+        enabled: yes\par
+\par
+  handlers:\par
+    - name: Reiniciar SSH\par
+      service:\par
+        name: ssh\par
+        state: restarted\par
+\b0\par
+
+\pard\sa200\sl276\slmult1\qc\b Ejecuci\'f3n y resultado\par
+
+\pard\sa200\sl276\slmult1\b0 La ejecuci\'f3n se hizo con:\par
+\b ansible-playbook -i inventory.ini hardening.yml\par
+\b0\par
+Tras completarse, el servidor Ubuntu qued\'f3 actualizado, con el firewall UFW bloqueando todo excepto SSH. La cuenta root deshabilitada para acceso remoto, y fail2ban activo para prevenir ataques de fuerza bruta.\par
+\par
+Con estos dos playbooks, se logr\'f3 automatizar la configuraci\'f3n de servicios y la seguridad de los servidores.\par
+\par
+\b\par
+\b0\lang22538\par
+\par
+\b\par
+\par
+\par
+\par
+\par
+\par
+\lang10\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\b0\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\b\par
+\b0\par
+\par
+\par
+\par
+\par
+\par
+\b\par
+\par
+\b0\par
+\b\par
+\b0\par
+\par
+\par
+
+\pard\sa200\sl276\slmult1\qc\par
+
+\pard\sa200\sl276\slmult1\b\fs52\par
+
+\pard\sa200\sl276\slmult1\qc\par
+\par
+\par
+\par
+\b0\fs22\par
+}
+ 

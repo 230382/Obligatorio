@@ -1,0 +1,84 @@
+---
+# Playbook para CentOS Stream 9 - Servidor NFS
+- name: Configuración de servidor NFS en CentOS
+  hosts: centos
+  become: yes
+  tasks:
+    - name: Instalar NFS
+      yum:
+        name: nfs-utils
+        state: present
+
+    - name: Iniciar y habilitar NFS
+      service:
+        name: nfs-server
+        state: started
+        enabled: yes
+
+    - name: Permitir puerto 2049 en el firewall
+      firewalld:
+        port: 2049/tcp
+        permanent: yes
+        state: enabled
+        immediate: yes
+
+    - name: Crear directorio compartido
+      file:
+        path: /var/nfs_shared
+        state: directory
+        owner: nobody
+        group: nobody
+        mode: '0777'
+
+    - name: Agregar entrada en /etc/exports
+      lineinfile:
+        path: /etc/exports
+        line: "/var/nfs_shared *(rw,sync,no_subtree_check)"
+        state: present
+      notify: Recargar exports
+
+  handlers:
+    - name: Recargar exports
+      command: exportfs -r
+
+---
+# Playbook para Ubuntu - Hardening
+- name: Hardening en servidor Ubuntu
+  hosts: ubuntu
+  become: yes
+  tasks:
+    - name: Actualizar todos los paquetes
+      apt:
+        upgrade: dist
+        update_cache: yes
+
+    - name: Configurar firewall UFW
+      ufw:
+        state: enabled
+        policy: deny
+        rule: allow
+        port: ssh
+
+    - name: Configurar SSH para solo clave pública y deshabilitar root
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PermitRootLogin'
+        line: 'PermitRootLogin no'
+      notify: Reiniciar SSH
+
+    - name: Instalar fail2ban
+      apt:
+        name: fail2ban
+        state: present
+
+    - name: Asegurar que fail2ban esté activo
+      service:
+        name: fail2ban
+        state: started
+        enabled: yes
+
+  handlers:
+    - name: Reiniciar SSH
+      service:
+        name: ssh
+        state: restarted
